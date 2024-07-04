@@ -47,7 +47,7 @@ class RC {
                 rtoDetails: rtoDetails,
             };
 
-            return res.json({ VehicleData: VehicleData });
+            return res.json(VehicleData);
 
         } catch (error) {
             console.error('Error fetching vehicle details:', error);
