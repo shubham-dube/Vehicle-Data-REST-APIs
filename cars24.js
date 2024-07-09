@@ -32,12 +32,11 @@ class Cars24 {
 
     async isVisibility(clas){
         let isVisible = null;
-        try {
-            const element = await this.driver.wait(until.elementLocated(By.className(clas)),50);
-            isVisible = element.getText();
-        } catch (error) {
-            isVisible=false;
+        const element = await this.driver.findElements(By.className(clas));
+        if(element.length>0){
+            isVisible = element[0].getText();
         }
+        else isVisible = false;
         return isVisible;
     }
 
@@ -76,56 +75,54 @@ class Cars24 {
             const checkChallanBtn = await this.driver.findElement(By.xpath('//div[2]/div[1]/div/button'));
             await checkChallanBtn.click();
 
-            const challans = []; 
-            const status = ['UNPAID','PAID'];
-
-            for(let j=0;j<status.length;j++){
-                const ChallanNoElements = await this.driver.wait(until.elementsLocated(By.xpath('//div[1]/span[2]')),2000);
-                const ChallanDateElements = await this.driver.findElements(By.xpath('//div[2]/span[2]'));
-                const ChallanAmtElements = await this.driver.findElements(By.xpath('//div[@class="_3CEVZ"]/span'));
-                const OffenceElements = await this.driver.findElements(By.xpath('//div[3]/span'));
-                let CourtElements = await this.driver.findElements(By.className('_3vvID'));
-                
-                let size = ChallanNoElements.length;
-                for(let i=0;i<size;i++){
-                    const challanNumber = await ChallanNoElements[i].getText();
-                    const challanDate = await ChallanDateElements[i].getText();
-                    const challanAmount = await ChallanAmtElements[i].getText();
-                    const challanOffence = await OffenceElements[i].getText();
-
-                    let challanCourt;
-                    if(j==0){
-                        challanCourt = await CourtElements[i].getText();
-                    }
-                    else challanCourt = "Settled";
-
-                    challans.push(
-                        {
-                            challanNumber: challanNumber,
-                            challanDate : challanDate,
-                            challanAmount: challanAmount,
-                            offence: challanOffence,
-                            court: challanCourt,
-                            status: status[j]
-                        }
-                    );
-                }
-                const paidChallansBtn = await this.driver.findElement(By.xpath('//div/div[1]/div/div[2]/ul/li[2]'));
-                await paidChallansBtn.click();
-            }
-
-            const vehicleDetails = {
-                vehicleNumber: vehicleNumber,
-                numberOfChallans: challans.length,
-                challans: challans
-            }
-            
-            return {vehicleDetails: vehicleDetails};
-
         } catch (error) {
-            console.log(error);
-            return {status:false,message:"Some Error Occured in Operation. PLease Login Again"};
+            return res.status(500).json({status:false, message: "Internal Server Error"})
         }
+
+        const challans = []; 
+        const status = ['UNPAID','PAID'];
+
+        for(let j=0;j<status.length;j++){
+            let ChallanNoElements
+            try {
+                ChallanNoElements = await this.driver.wait(until.elementsLocated(By.xpath('//div[1]/span[2]')),2000);
+            } catch (error) {
+                ChallanNoElements = [];
+            }
+            const ChallanDateElements = await this.driver.findElements(By.xpath('//div[2]/span[2]'));
+            const ChallanAmtElements = await this.driver.findElements(By.xpath('//div[@class="_3CEVZ"]/span'));
+            const OffenceElements = await this.driver.findElements(By.xpath('//div[3]/span'));
+            
+            let size = ChallanNoElements.length;
+            console.log(size);
+            for(let i=0;i<size;i++){
+                const challanNumber = await ChallanNoElements[i].getText();
+                const challanDate = await ChallanDateElements[i].getText();
+                const challanAmount = await ChallanAmtElements[i].getText();
+                const challanOffence = await OffenceElements[i].getText();
+
+                challans.push(
+                    {
+                        challanNumber: challanNumber,
+                        challanDate : challanDate,
+                        challanAmount: challanAmount,
+                        offence: challanOffence,
+                        status: status[j]
+                    }
+                );
+            }
+            const paidChallansBtn = await this.driver.findElement(By.xpath('//div/div[1]/div/div[2]/ul/li[2]'));
+            await paidChallansBtn.click();
+        }
+
+        const vehicleDetails = {
+            vehicleNumber: vehicleNumber,
+            numberOfChallans: challans.length,
+            challans: challans
+        }
+        
+        return vehicleDetails;
+
     }
 
 };

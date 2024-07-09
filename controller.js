@@ -23,14 +23,14 @@ let UserSeasons = {};
 
 async function getDriverInstance(){
     const options = new chrome.Options();
-    // options.addArguments('window-size=1920,1080');
-    // options.addArguments('resolution=1920,1080');
-    // options.addArguments('disable-extensions');
-    // options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
+    options.addArguments('window-size=1920,1080');
+    options.addArguments('resolution=1920,1080');
+    options.addArguments('disable-extensions');
+    options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
     driver = new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
 
     this.driver.manage().setTimeouts({
-        implicit: 10000,
+        implicit: 1000,
         pageLoad: 10000,
         script: 10000,
     });
@@ -200,6 +200,7 @@ exports.dispose = async (req,res) => {
     try {
         const {mobile} = await req.body;
         if(UserSeasons[mobile]){
+            UserSeasons[mobile].driver.quit();
             delete UserSeasons[mobile];
         }
         else return res.status(401).json({status:false,error: "User Not Found" , message: "Nothing to Dispose"});

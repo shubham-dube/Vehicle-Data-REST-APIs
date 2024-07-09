@@ -34,11 +34,9 @@ class CarInfo {
 
     async isVisibility(clas){
         let isVisible = false;
-        try {
-            const element = await this.driver.wait(until.elementLocated(By.className(clas)));
+        const element = await this.driver.findElements(By.className(clas));
+        if(element.length>0){
             isVisible = true;
-        } catch (error) {
-            isVisible=false;
         }
         return isVisible;
     }
@@ -87,11 +85,10 @@ class CarInfo {
             const insuranceExpiryDate = await expiryDateElements[0].getText();
             const puccExpiryDate = await expiryDateElements[1].getText();
 
-            const challanDetailsHeader = await this.driver.findElement(By.className('Challan-details-heading')).getText();
-            const numberOfChallans =  Number(challanDetailsHeader.replace(/[^0-9]/g, ''));
+            const challanIdTemp = await this.driver.findElements(By.xpath('//table/tr[1]/th[1]/div[2]'));
+            const numberOfChallans =  await challanIdTemp.length;
 
             const challans = [];
-
             
             for(let i=0;i<numberOfChallans;i++){
 

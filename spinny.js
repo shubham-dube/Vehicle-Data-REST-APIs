@@ -1,5 +1,6 @@
 const {Browser, Builder, By, Key, until, Options } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
+const { Console } = require('winston/lib/winston/transports');
 
 class Spinny {
     constructor(driver) {
@@ -17,11 +18,21 @@ class Spinny {
             const sendOTPBtn = await this.driver.findElement(By.className('styles__btn LoginModal__getOtpBtn styles__primary styles__largeBtn'));
             await sendOTPBtn.click();
 
-            return {status: true, message: "OTP Sent Successfully"};
         } catch (error) {
             console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
+
+        try {
+            const nameField = await this.driver.findElement(By.id('login-name'));
+            await nameField.sendKeys("RidoBiko Solutions Pvt Ltd");
+
+            const verifyBtn = await this.driver.findElement(By.className('Ripple__container'));
+            await verifyBtn.click();
+        } catch (error) {
+        }
+
+        return {status: true, message: "OTP Sent Successfully"};
     }
 
     async isVisibility(tag){
@@ -54,6 +65,7 @@ class Spinny {
             }
 
             return {status: true, message: "Signed In Successfull"};
+
         } catch (error) {
             console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
@@ -73,11 +85,11 @@ class Spinny {
 
             let challanHeader = '';
             while(challanHeader==='') {
-                challanHeader = await this.driver.findElement(By.className('challanEntriesList__challanEntriesListHeading')).getText();
+                challanHeader = await this.driver.wait(until.elementLocated(By.className('challanEntriesList__challanEntriesListHeading')),10000).getText();
             }
-            const numberOfChallans =  Number(challanHeader.replace(/[^0-9]/g, ''));
-            console.log("number : " + numberOfChallans);
-            console.log(challanHeader);
+
+            const challanAmountTemp = await this.driver.findElements(By.className('challanEntry__amount'));  
+            const numberOfChallans =  await challanAmountTemp.length;
 
             const challans = [];
             
@@ -121,6 +133,7 @@ class Spinny {
             }
             return vehicleDetails;
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
     }
