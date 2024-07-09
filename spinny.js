@@ -2,29 +2,15 @@ const {Browser, Builder, By, Key, until, Options } = require('selenium-webdriver
 const chrome = require('selenium-webdriver/chrome');
 
 class Spinny {
-    constructor() {
-        const options = new chrome.Options();
-        options.addArguments('window-size=1920,1080');
-        options.addArguments('resolution=1920,1080');
-        options.addArguments('disable-extensions');
-        options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
-        this.driver = new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
-
-        this.driver.manage().setTimeouts({
-            implicit: 10000,
-            pageLoad: 10000,
-            script: 10000,
-          });
-          
-    }
-
-    async openWebsite() {
-        await this.driver.get('https://www.spinny.com/account/');
+    constructor(driver) {
+        this.driver = driver;
     }
 
     async signInWithMobile(mobile){
 
         try {
+            await this.driver.get('https://www.spinny.com/account/');
+
             const mobileInput = await this.driver.findElement(By.id('login-mobile-number'));
             await mobileInput.sendKeys(mobile);
 
@@ -33,18 +19,43 @@ class Spinny {
 
             return {status: true, message: "OTP Sent Successfully"};
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
+    }
+
+    async isVisibility(tag){
+        let isVisible = null;
+        try {
+            let count = 0;
+            while(count<100){
+                const element = await this.driver.findElement(By.css(tag));
+                isVisible = await element.getAttribute('data-focus-value');
+                count++;
+            }
+        } catch (error) {
+            isVisible=false;
+        }
+        return isVisible;
     }
 
     async submitOTP(otp){
         try {
             const OtpInput = await this.driver.findElement(By.id('login-otp'));
             console.log("hello" + " " + otp);
-            OtpInput.sendKeys(otp)
+            OtpInput.sendKeys(otp);
+
+            const isWrongOTP = await this.isVisibility('label');
+            if(isWrongOTP){
+                await OtpInput.clear();
+                if(isWrongOTP=="Invalid OTP"){
+                    return {status: false, message: isWrongOTP};
+                }
+            }
 
             return {status: true, message: "Signed In Successfull"};
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
     }
@@ -115,13 +126,7 @@ class Spinny {
     }
 
 };
+
 module.exports = {
     Spinny
 };
-
-// if (require.main === module) {
-//   const p = new Spinny();
-//   p.openWebsite()
-//   p.signInWithMobile("7687877772");
-//   p.getVehicleDetails('HR55AK5584')
-// }

@@ -2,56 +2,14 @@ const {Browser, Builder, By, Key, until, Options } = require('selenium-webdriver
 const chrome = require('selenium-webdriver/chrome');
 
 class CarInfo {
-    constructor() {
-        const options = new chrome.Options();
-        // options.addArguments('window-size=1920,1080');
-        // options.addArguments('resolution=1920,1080');
-        // options.addArguments('disable-extensions');
-        // options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
-        this.driver = new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
-
-        this.driver.manage().setTimeouts({
-            implicit: 10000,
-            pageLoad: 10000,
-            script: 10000,
-          });
-    }
-
-    async openWebsite() {
-        await this.driver.get('https://carinfo.app/');
-    }
-
-    async signInWithGoogle(email,password){
-        try {
-            await this.driver.actions().move({ x: 0, y: 0 }).click().perform();
-
-            const loginBtn = await this.driver.findElement(By.xpath('//button[@class="navbar_loginBtn__hLQWL button_button__SuVEC "]'));
-            await loginBtn.click();
-            await this.driver.manage().deleteAllCookies();
-
-            const googleLoginBtn = await this.driver.findElement(By.xpath('//p[contains(text(),"Login with Google")]'));
-            let tt = await googleLoginBtn.getText();
-            console.log(tt);
-            await googleLoginBtn.click();
-
-            const emailInput = await this.driver.wait(until.elementLocated(By.xpath('//input[@autocomplete="username"]')), 10000);
-            await emailInput.sendKeys(email);
-            await emailInput.sendKeys(Key.ENTER);
-
-            const passwordInput = await this.driver.wait(until.elementLocated(By.xpath('//input[@autocomplete="current-password"]')), 10000);
-            await passwordInput.sendKeys(password);
-            await passwordInput.sendKeys(Key.ENTER);
-            await this.driver.wait(until.elementLocated(By.xpath('//img[@alt="carInfo"]')),10000);
-
-            return {status:true,message:"Logged In"};
-
-        } catch (error) {
-            return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
-        }
+    constructor(driver) {
+        this.driver = driver;
     }
 
     async signInWithMobile(mobile){
         try {
+            await this.driver.get('https://carinfo.app/');
+            
             await this.driver.actions().move({ x: 0, y: 0 }).click().perform();
 
             const loginBtn = await this.driver.findElement(By.xpath('//button[@class="navbar_loginBtn__hLQWL button_button__SuVEC "]'));
@@ -69,8 +27,20 @@ class CarInfo {
             return {status: true, message: "OTP Sent Successfully"};
 
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
+    }
+
+    async isVisibility(clas){
+        let isVisible = false;
+        try {
+            const element = await this.driver.wait(until.elementLocated(By.className(clas)));
+            isVisible = true;
+        } catch (error) {
+            isVisible=false;
+        }
+        return isVisible;
     }
 
     async submitOTP(otp){
@@ -85,12 +55,21 @@ class CarInfo {
             otp = otp/10;
             OtpInputs[0].sendKeys(otp);
 
-            const submitBtn = this.driver.findElement(By.xpath('//button[contains(text(),"CONFIRM OTP")]'));
+            const submitBtn = await this.driver.findElement(By.xpath('//button[contains(text(),"CONFIRM OTP")]'));
             await submitBtn.click();
+
+            if(await this.isVisibility('toast_toastContainer__OiXCo')) {
+                for(let i=0;i<4;i++){
+                    OtpInputs[i].click();
+                    OtpInputs[i].sendKeys(Key.BACK_SPACE);
+                }
+                return {status: false, message: "Wrong OTP"};
+            };
 
             return {status: true, message: "Signed In Successfull"};
 
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Login Again"};
         }
     }
@@ -155,6 +134,7 @@ class CarInfo {
             return vehicleDetails;
             
         } catch (error) {
+            console.log(error);
             return {status:false,message:"Some Error Occured in Operation. PLease Retry Again"};
         }
     }
@@ -164,10 +144,3 @@ class CarInfo {
 module.exports = {
     CarInfo
 };
-
-// if (require.main === module) {
-//   const p = new Process();
-//   p.openWebsite()
-//   p.signInWithGoogle("testemailridobiko","Ridobiko");
-//   p.getVehicleDetails('HR55AK5584')
-// }

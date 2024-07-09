@@ -1,3 +1,5 @@
+const {Browser, Builder, By, Key, until, Options } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 const {CarInfo} = require("./carInfo.js");
 const {Spinny} = require("./spinny.js");
 const {VirtualCourt} = require('./virtualCourt.js');
@@ -19,32 +21,34 @@ let serverIndex = {
 
 let UserSeasons = {};
 
-async function getBrowserInstance(server){
-    // const options = new chrome.Options();
-    // // options.addArguments('window-size=1920,1080');
-    // // options.addArguments('resolution=1920,1080');
-    // // options.addArguments('disable-extensions');
-    // // options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
-    // driver = new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
+async function getDriverInstance(){
+    const options = new chrome.Options();
+    // options.addArguments('window-size=1920,1080');
+    // options.addArguments('resolution=1920,1080');
+    // options.addArguments('disable-extensions');
+    // options.addArguments(['--headless','--disable-gpu','--no-sandbox','--disable-dev-shm-usage']);
+    driver = new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
 
-    // this.driver.manage().setTimeouts({
-    //     implicit: 10000,
-    //     pageLoad: 10000,
-    //     script: 10000,
-    //     });
+    this.driver.manage().setTimeouts({
+        implicit: 10000,
+        pageLoad: 10000,
+        script: 10000,
+    });
+    return driver;
+}
+
+async function getBrowserInstance(server,driver){
+
     if(server=="CarInfo"){
-        const carInfo = new CarInfo()
-        await carInfo.openWebsite();
+        const carInfo = new CarInfo(driver)
         return carInfo;
     }
     else if(server=="Spinny"){
-        const spinny = new Spinny()
-        await spinny.openWebsite();
+        const spinny = new Spinny(driver)
         return spinny;
     }
     else if(server=="Cars24"){
-        const cars24 = new Cars24()
-        await cars24.openWebsite();
+        const cars24 = new Cars24(driver)
         return cars24;
     }
     else return null;
@@ -64,20 +68,21 @@ exports.SignInMobile = async(req,res)=>{
         const {server,mobile} = req.body;
         let response;
         if(!UserSeasons[mobile]){
-
+            const driver = await getDriverInstance();
             UserSeasons[mobile] = {
                 serverIndex: serverIndex[server],
+                driver: driver,
                 instances: [
                     {
                         isOTPSent: false,
                         isLoggedIn: false,
                         server: server,
-                        browserInstance: await getBrowserInstance(server)
+                        website: await getBrowserInstance(server,driver)
                     }
                 ]
             };
 
-            response = await UserSeasons[mobile].instances[0].browserInstance.signInWithMobile(mobile);
+            response = await UserSeasons[mobile].instances[0].website.signInWithMobile(mobile);
         }
         else {
             if(checkIsServer(mobile,server) == -1){
@@ -86,18 +91,18 @@ exports.SignInMobile = async(req,res)=>{
                     isOTPSent: false,
                     isLoggedIn: false,
                     server: server,
-                    browserInstance: await getBrowserInstance(server)
+                    website: await getBrowserInstance(server, UserSeasons[mobile].driver)
                 });
                 const instanceSize = await UserSeasons[mobile].instances.length;
-                response = await UserSeasons[mobile].instances[instanceSize-1].browserInstance.signInWithMobile(mobile);
+                response = await UserSeasons[mobile].instances[instanceSize-1].website.signInWithMobile(mobile);
             }
             else {
                 const instanceIndex = checkIsServer(mobile,server);
-                if(await UserSeasons[mobile].instances[instanceIndex].isOTPSent == true && await UserSeasons[mobile].instances[instanceIndex].isLoggedIn==true) {
-                    return res.json({status: true, message: "You Are Already Logged In"});
+                if(await UserSeasons[mobile].instances[instanceIndex].isLoggedIn==true) {
+                    return res.status(201).json({status: true, message: "You Are Already Logged In"});
                 }
                 else {
-                    return res.json({status: true, message: "Please Login Again"});
+                    return res.status(50).json({status: true, message: "Please Login Again"});
                 }
             }
         }
@@ -107,12 +112,15 @@ exports.SignInMobile = async(req,res)=>{
             const instanceIndex = checkIsServer(mobile,Server[serverIndex]);
             UserSeasons[mobile].instances[instanceIndex].isOTPSent = true;
         }
+        else {
+            delete UserSeasons[mobile];
+        }
 
         return res.json(response);
 
     } catch(err){
-        // throw(err);
-        res.json({status: false, message: "Internal Serval Error",error: await err});
+        console.log(err);
+        res.status(500).json({status: false, message: "Internal Serval Error"});
     }
 }
 
@@ -124,25 +132,26 @@ exports.submitOtp = async(req,res)=>{
             const serverIndex = await UserSeasons[mobile].serverIndex;
             const instanceIndex = checkIsServer(mobile,Server[serverIndex]);
             if(instanceIndex !=-1 && await UserSeasons[mobile].instances[instanceIndex].isLoggedIn ==false){
-                response =  await UserSeasons[mobile].instances[instanceIndex].browserInstance.submitOTP(otp);
+                response =  await UserSeasons[mobile].instances[instanceIndex].website.submitOTP(otp);
 
                 if(response.status == true) {
                     UserSeasons[mobile].instances[instanceIndex].isLoggedIn = true;
+                    return res.status(200).json(response);
                 }
-                return res.json(response);
+                return res.status(500).json(response);
             }
             else {
-                if(instanceIndex==-1) return res.json({status: false, message: "Login Again to this Server.",error: "Instance not Found" });
-                return res.json({status:true,message: "You Are Already Logged In"});
+                if(instanceIndex==-1) return res.status(401).json({status: false, message: "Login Again to this Server.",error: "Instance not Found" });
+                return res.status(201).json({status:true,message: "You Are Already Logged In"});
             }
         }
         else {
-            res.json({status:false,message: "Please Login Again", error: "User Not Found on any Server"});
+            res.status(401).json({status:false,message: "Please Login Again", error: "User Not Found on any Server"});
         }
 
     } catch(err){
-        // throw(err);
-        res.json({status:401,error: "Internal Server Error" , error: err});
+        console.log(err);
+        res.status(500).json({status:false,error: "Internal Server Error" });
     }
 }
 
@@ -156,19 +165,19 @@ exports.getVehicleDetail = async (req,res) => {
             if(instanceIndex!=-1){
                 const isLoggedIn = vehicleData =  await UserSeasons[mobile].instances[instanceIndex].isLoggedIn;
                 if(isLoggedIn){
-                    vehicleData =  await UserSeasons[mobile].instances[instanceIndex].browserInstance.getVehicleDetails(vehicleNumber);
+                    vehicleData =  await UserSeasons[mobile].instances[instanceIndex].website.getVehicleDetails(vehicleNumber);
                 }
-                else return res.json({status: false, message: "You Have Not Logged In" });
+                else return res.status(201).json({status: false, message: "You Have Not Logged In" });
             }
-            else res.json({status: false, message: "Login Again to this Server.",error: "Instance not Found" });
+            else res.status(401).json({status: false, message: "Login Again to this Server.",error: "Instance not Found" });
 
             return res.json(vehicleData);
         }
-        else return res.json({})
+        else return res.status(401).json({status: false, message: "User Not Found"});
     } 
     catch (error){
-        throw(error);
-        // res.json({status:401,error: "Internal Server Error" });
+        console.log(error);
+        res.status(500).json({status:false,error: "Internal Server Error" });
     }
 }
 
@@ -177,15 +186,31 @@ exports.changeServer = async (req,res) => {
         const {mobile,server} = await req.body;
         if(UserSeasons[mobile]){
             UserSeasons[mobile].serverIndex = serverIndex[server];
-            res.json({Status: true, message: "Server Changed Successfuly"});
         }
-        else return res.json({status:401,error: "User Not Found" , message: "Login to Continue"})
+        else return res.json({status:401,error: "User Not Found" , message: "Login to Continue"});
+        return res.status(200).json({Status: true, message: "Server Changed Successfuly"});
     } 
     catch (error){
-        throw(error);
-        res.json({status:401,message: "Internal Server Error" , error: error});
+        console.log(error);
+        res.status(500).json({status:false,message: "Internal Server Error" });
     }
 }
+
+exports.dispose = async (req,res) => {
+    try {
+        const {mobile} = await req.body;
+        if(UserSeasons[mobile]){
+            delete UserSeasons[mobile];
+        }
+        else return res.status(401).json({status:false,error: "User Not Found" , message: "Nothing to Dispose"});
+        return res.status(200).json({status:true,error: "User Disposed Successfully"});
+    } 
+    catch (error){
+        console.log(error);
+        res.status(500).json({status:false,message: "Internal Server Error" });
+    }
+}
+
 
 // exports.selectState = async (req,res) => {
 //     try {
