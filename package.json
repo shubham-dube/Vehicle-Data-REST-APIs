@@ -12,8 +12,6 @@
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "selenium-webdriver": "^4.22.0",
-    "sharp": "^0.33.4",
-    "winston": "^3.13.0",
-    "xpath": "^0.0.34"
+    "winston": "^3.13.0"
   }
 }
