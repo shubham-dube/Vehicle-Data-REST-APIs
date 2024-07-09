@@ -7,6 +7,6 @@ router.post("/submitOtp", controller.submitOtp);
 router.post("/changeServer", controller.changeServer);
 router.post("/dispose", controller.dispose);
 
-router.post("/getVehicleDetails", controller.getVehicleDetail);
+router.post("/getChallanDetails", controller.getChallanDetails);
 
 module.exports = router;

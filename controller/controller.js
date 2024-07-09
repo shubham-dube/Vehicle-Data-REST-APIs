@@ -152,7 +152,7 @@ exports.submitOtp = async(req,res)=>{
     }
 }
 
-exports.getVehicleDetail = async (req,res) => {
+exports.getChallanDetails = async (req,res) => {
     try {
         const {mobile,vehicleNumber} = req.body;
         let vehicleData;
