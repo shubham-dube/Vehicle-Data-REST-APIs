@@ -41,7 +41,7 @@ The Vehicle E-Challan Retrieval Service allows you to fetch e-challan details fr
 
 4. Start the server:
     ```sh
-    node index
+    node index.js
     ```
 
 ## Usage
