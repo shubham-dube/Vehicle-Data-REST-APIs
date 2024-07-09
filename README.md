@@ -22,13 +22,13 @@ The Vehicle E-Challan Retrieval Service allows you to fetch e-challan details fr
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/vehicle-echallan-service.git
-    cd vehicle-echallan-service
+    git clone https://github.com/shubham-dube/vehicle-e-challan-retrieval-service
+    cd vehicle-e-challan-retrieval-service
     ```
 
 2. Install dependencies:
     ```sh
-    npm install
+    npm install selenium-webdriver express axios body-parser cheerio chromedriver cluster cors dotenv express-rate-limit helmet morgan winston
     ```
 
 3. Create a `.env` file in the root directory with the following content:
