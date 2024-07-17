@@ -510,3 +510,8 @@
 {"level":"info","message":"::1 - - [09/Jul/2024:15:35:28 +0000] \"POST /changeServer HTTP/1.1\" 200 54 \"-\" \"PostmanRuntime/7.40.0\""}
 {"level":"info","message":"::1 - - [09/Jul/2024:15:35:39 +0000] \"POST /getChallanDetails HTTP/1.1\" 200 260 \"-\" \"PostmanRuntime/7.40.0\""}
 {"level":"info","message":"::1 - - [09/Jul/2024:15:36:25 +0000] \"POST /dispose HTTP/1.1\" 200 52 \"-\" \"PostmanRuntime/7.40.0\""}
+{"level":"info","message":"::1 - - [17/Jul/2024:14:23:43 +0000] \"POST /signInWithMobile HTTP/1.1\" 200 80 \"-\" \"PostmanRuntime/7.40.0\""}
+{"level":"info","message":"::1 - - [17/Jul/2024:14:24:01 +0000] \"POST /signInWithMobile HTTP/1.1\" 200 49 \"-\" \"PostmanRuntime/7.40.0\""}
+{"level":"info","message":"::1 - - [17/Jul/2024:14:26:59 +0000] \"POST /submitOtp HTTP/1.1\" 200 49 \"-\" \"PostmanRuntime/7.40.0\""}
+{"level":"info","message":"::1 - - [17/Jul/2024:14:28:28 +0000] \"POST /submitOtp HTTP/1.1\" 201 53 \"-\" \"PostmanRuntime/7.40.0\""}
+{"level":"info","message":"::1 - - [17/Jul/2024:14:29:36 +0000] \"POST /getChallanDetails HTTP/1.1\" 200 65 \"-\" \"PostmanRuntime/7.40.0\""}

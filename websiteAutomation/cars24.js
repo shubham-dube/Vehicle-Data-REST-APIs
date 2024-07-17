@@ -84,7 +84,7 @@ class Cars24 {
         for(let j=0;j<status.length;j++){
             let ChallanNoElements
             try {
-                ChallanNoElements = await this.driver.wait(until.elementsLocated(By.xpath('//div[1]/span[2]')),2000);
+                ChallanNoElements = await this.driver.wait(until.elementsLocated(By.xpath('//div[1]/span[2]')),4000);
             } catch (error) {
                 ChallanNoElements = [];
             }
